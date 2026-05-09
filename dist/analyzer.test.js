@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile, mkdir } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -31,5 +31,12 @@ test('detects Node project issues and frameworks', async () => {
     assert.ok(result.diagnostics.some((item) => item.id === 'node.express.helmet.missing'));
     assert.ok(result.diagnostics.some((item) => item.id === 'node.api.mutating-route-auth-signal-missing'));
     assert.ok(result.score < 100);
+});
+test('detects bun lockfiles as bun package manager', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'doctor-node-bun-'));
+    await writeFile(join(root, 'package.json'), JSON.stringify({ name: 'bun-demo', scripts: { test: 'bun test' } }));
+    await writeFile(join(root, 'bun.lockb'), '');
+    const result = await scan({ root, json: false, includeTests: false, maxFiles: 100 });
+    assert.equal(result.packageManager, 'bun');
 });
 //# sourceMappingURL=analyzer.test.js.map

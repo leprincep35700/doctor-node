@@ -3,22 +3,22 @@
   "version": "0.1.0",
   "description": "Local-first diagnostics for Node.js apps and popular Node frameworks",
   "license": "MIT",
-  "author": "ThéoVeo / Veonum",
+  "author": "Théo",
   "homepage": "https://github.com/leprincep35700/doctor-node#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/leprincep35700/doctor-node.git"
+    "url": "git+https://github.com/leprincep35700/doctor-node.git"
   },
   "bugs": {
     "url": "https://github.com/leprincep35700/doctor-node/issues"
   },
   "type": "module",
   "bin": {
-    "doctor-node": "./dist/cli.js",
-    "node-doctor": "./dist/cli.js"
+    "doctor-node": "dist/cli.js"
   },
   "files": [
     "dist/**",
+    "!dist/**/*.test.*",
     "README.md",
     "LICENSE"
   ],
@@ -27,7 +27,8 @@
     "lint": "npm run typecheck",
     "test": "npm run build && node --test dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "prepack": "npm run build"
   },
   "engines": {
     "node": ">=20"
@@ -35,5 +36,26 @@
   "devDependencies": {
     "@types/node": "^20.19.25",
     "typescript": "^5.9.3"
-  }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./cli": "./dist/cli.js"
+  },
+  "keywords": [
+    "diagnostics",
+    "nodejs",
+    "typescript",
+    "security",
+    "performance",
+    "cli",
+    "express",
+    "fastify",
+    "nestjs",
+    "nextjs"
+  ]
 }
