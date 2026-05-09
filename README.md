@@ -1,6 +1,8 @@
 # Doctor Node
 
-Local-first diagnostics for Node.js projects. Think “React Doctor”, but aimed at the Node ecosystem: Express, Fastify, NestJS, Next.js APIs, Remix, Nuxt/Nitro, SvelteKit, Astro, Hono, Koa, Prisma and generic TypeScript/JavaScript backends.
+Local-first diagnostics for Node.js projects by Théo. Think “React Doctor”, but aimed at the Node ecosystem: Express, Fastify, NestJS, Next.js APIs, Remix, Nuxt/Nitro, SvelteKit, Astro, Hono, Koa, Prisma and generic TypeScript/JavaScript backends.
+
+> Naming note: `doctor-node` is currently free on npm, but `node-doctor` already exists as a separate package. This project only exposes the `doctor-node` binary to avoid confusing users or colliding with that existing tool.
 
 ## Principles
 

@@ -2,6 +2,15 @@
 import { resolve } from 'node:path';
 import { scan } from './analyzer.js';
 import { DEFAULT_MAX_FILES } from './constants.js';
+const parseBoundedInteger = (option, value, minimum, maximum) => {
+    if (!value)
+        throw new Error(`${option} requires a number`);
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < minimum || parsed > maximum) {
+        throw new Error(`${option} must be an integer between ${minimum} and ${maximum}`);
+    }
+    return parsed;
+};
 const parseArgs = (argv) => {
     const args = { root: '.', json: false, includeTests: false, maxFiles: DEFAULT_MAX_FILES, help: false, version: false };
     for (let index = 0; index < argv.length; index += 1) {
@@ -17,17 +26,11 @@ const parseArgs = (argv) => {
         else if (arg === '--include-tests')
             args.includeTests = true;
         else if (arg === '--min-score') {
-            const value = argv[index + 1];
-            if (!value)
-                throw new Error('--min-score requires a number');
-            args.minScore = Number(value);
+            args.minScore = parseBoundedInteger('--min-score', argv[index + 1], 0, 100);
             index += 1;
         }
         else if (arg === '--max-files') {
-            const value = argv[index + 1];
-            if (!value)
-                throw new Error('--max-files requires a number');
-            args.maxFiles = Number(value);
+            args.maxFiles = parseBoundedInteger('--max-files', argv[index + 1], 1, 100_000);
             index += 1;
         }
         else if (arg.startsWith('-')) {

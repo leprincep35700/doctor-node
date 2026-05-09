@@ -17,12 +17,21 @@ const push = (diagnostics: Diagnostic[], input: Diagnostic): void => {
   diagnostics.push(diagnostic(input))
 }
 
-const lockfiles = ['package-lock.json', 'npm-shrinkwrap.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lockb', 'bun.lock']
+const packageManagerByLockfile = {
+  'package-lock.json': 'npm',
+  'npm-shrinkwrap.json': 'npm',
+  'pnpm-lock.yaml': 'pnpm',
+  'yarn.lock': 'yarn',
+  'bun.lockb': 'bun',
+  'bun.lock': 'bun',
+} as const
+
+const lockfiles = Object.keys(packageManagerByLockfile)
 
 const detectPackageManager = async (root: string, packageJson: PackageJson | undefined): Promise<string | undefined> => {
   if (packageJson?.packageManager) return packageJson.packageManager.split('@')[0]
   for (const lockfile of lockfiles) {
-    if (await fileExists(join(root, lockfile))) return lockfile.replace('-lock.yaml', '').replace('-lock.json', '').replace('.lock', '').replace('package', 'npm')
+    if (await fileExists(join(root, lockfile))) return packageManagerByLockfile[lockfile as keyof typeof packageManagerByLockfile]
   }
   return undefined
 }

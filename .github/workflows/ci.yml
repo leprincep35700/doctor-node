@@ -18,3 +18,13 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: node dist/cli.js --version
+      - run: npm pack --dry-run
+      - name: Verify packaged CLI and API
+        run: |
+          set -euo pipefail
+          tarball=$(npm pack --silent)
+          tmp=$(mktemp -d)
+          npm --prefix "$tmp" init -y >/dev/null
+          npm --prefix "$tmp" install "$PWD/$tarball" >/dev/null
+          "$tmp/node_modules/.bin/doctor-node" --version
+          (cd "$tmp" && node --input-type=module -e "import('doctor-node').then((module) => { if (typeof module.scan !== 'function') process.exit(1) })")
