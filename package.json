@@ -1,0 +1,39 @@
+{
+  "name": "doctor-node",
+  "version": "0.1.0",
+  "description": "Local-first diagnostics for Node.js apps and popular Node frameworks",
+  "license": "MIT",
+  "author": "ThéoVeo / Veonum",
+  "homepage": "https://github.com/leprincep35700/doctor-node#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leprincep35700/doctor-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/leprincep35700/doctor-node/issues"
+  },
+  "type": "module",
+  "bin": {
+    "doctor-node": "./dist/cli.js",
+    "node-doctor": "./dist/cli.js"
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/make-cli-executable.mjs",
+    "lint": "npm run typecheck",
+    "test": "npm run build && node --test dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.25",
+    "typescript": "^5.9.3"
+  }
+}
