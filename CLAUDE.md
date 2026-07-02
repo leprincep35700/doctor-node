@@ -37,3 +37,15 @@ bash → uniquement via MCP).
 **Vérification** : un seul appel `mcp__github__pull_request_read`
 (`get_check_runs`) montre les deux checks en `completed/success` avant merge ;
 peu de cycles d'attente (pas 4+ réveils qui ratent la fin de peu).
+
+
+## Règle — Surveillance CI GitHub jusqu'au vert
+
+Quand on attend une CI GitHub verte, ne pas supposer qu'un webhook ou Claude préviendra au succès. Les notifications fiables couvrent surtout les échecs/reviews ; un succès doit être constaté par polling.
+
+Cadence par défaut :
+- Vérifier d'abord les checks/jobs réels et le SHA concerné.
+- Si les jobs sont `pending`/`queued`, re-sonder toutes les 2–3 minutes.
+- Dès que les jobs sont `in_progress` ou proches de leur durée habituelle, resserrer à 45–60 secondes jusqu'au vert.
+- Ne jamais annoncer « vert », « ready » ou merger sur un statut partiel/stale : tous les required checks du dernier SHA doivent être `completed/success`.
+- Si la file runner est saturée, dire explicitement qu'on surveille à cadence courte au lieu de laisser dormir la session.
