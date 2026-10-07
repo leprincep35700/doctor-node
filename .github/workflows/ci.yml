@@ -11,10 +11,25 @@ jobs:
     runs-on: [self-hosted, Linux, X64, doctor-node-hermes-ephemeral]
     steps:
       - uses: actions/checkout@v4
+      # Runner self-hosted avec volume de cache persistant (ci-worker-orchestrator,
+      # `CI_CACHE_DIR`) : store pnpm, cache npm et navigateurs Playwright y sont déjà,
+      # donc on saute les caches GitHub (lents depuis les Mac). Sans volume :
+      # comportement inchangé.
+      - name: Cache local du runner ?
+        id: cicache
+        shell: bash
+        run: |
+          if [ -n "${CI_CACHE_DIR:-}" ] && [ -d "$CI_CACHE_DIR" ] && [ -w "$CI_CACHE_DIR" ]; then
+            echo "local=true" >> "$GITHUB_OUTPUT"
+            echo "Volume de cache local : $CI_CACHE_DIR"
+          else
+            echo "local=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: ${{ steps.cicache.outputs.local != 'true' && 'npm' || '' }}
       - run: npm ci
       - run: npm run check
       - run: node dist/cli.js --version
