@@ -49,3 +49,25 @@ Cadence par défaut :
 - Dès que les jobs sont `in_progress` ou proches de leur durée habituelle, resserrer à 45–60 secondes jusqu'au vert.
 - Ne jamais annoncer « vert », « ready » ou merger sur un statut partiel/stale : tous les required checks du dernier SHA doivent être `completed/success`.
 - Si la file runner est saturée, dire explicitement qu'on surveille à cadence courte au lieu de laisser dormir la session.
+
+## CI partagée : moins de relances
+
+On code à plusieurs, avec plusieurs PR en parallèle, sur des runners partagés.
+Chaque push relance la CI de la branche et annule le run en cours. Mesuré sur
+Izi-Devis-apps entre le 12 et le 14/10/2026 : 64 % des CI de PR annulées avant
+la fin. Donc :
+
+- **Grouper les pushes.** Travailler et tester en local, puis pousser une série
+  de corrections d'un coup (toutes les remarques d'une revue Codex ensemble),
+  jamais un push par remarque.
+- **Une PR par sujet livrable**, pas un découpage en PR qui se suivent. Deux
+  sujets sans rapport restent séparés.
+- **Ouvrir la PR quand elle est prête à relire**, ou en brouillon (draft) si
+  on veut la montrer avant. Attention : un brouillon n'économise de la CI que
+  si le workflow saute les jobs lourds sur les brouillons ; sinon chaque push
+  relance quand même tout, d'où l'intérêt de grouper les pushes.
+- **Mettre la branche à jour avec la branche par défaut au dernier moment**,
+  juste avant le merge, en la mergeant dans la branche (jamais rebase ni
+  `--force`).
+- **Lire le log avant de relancer un job en échec.** Un test instable connu se
+  signale (issue ou note) au lieu d'être relancé en boucle.
