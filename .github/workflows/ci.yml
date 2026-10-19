@@ -6,11 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    runs-on: [self-hosted, Linux, X64, doctor-node-hermes-ephemeral]
+    runs-on: ${{ fromJSON((github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && '["self-hosted","Linux","doctor-node-hermes-ephemeral"]' || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
+      - name: Execution architecture evidence
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        run: bash scripts/ci-host-evidence.sh
       # Runner self-hosted avec volume de cache persistant (ci-worker-orchestrator,
       # `CI_CACHE_DIR`) : store pnpm, cache npm et navigateurs Playwright y sont déjà,
       # donc on saute les caches GitHub (lents depuis les Mac). Sans volume :
@@ -26,10 +32,13 @@ jobs:
             echo "local=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: ${{ steps.cicache.outputs.local != 'true' && 'npm' || '' }}
+      - name: CI regression guards
+        run: node --test tests/ci/*.test.mjs
       - run: npm ci
       - run: npm run check
       - run: node dist/cli.js --version
