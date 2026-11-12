@@ -14,9 +14,34 @@ jobs:
     runs-on: ${{ fromJSON((github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && '["self-hosted","Linux","doctor-node-hermes-ephemeral"]' || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # base de la PR (HEAD^1) pour détecter une PR de doc seule
       - name: Execution architecture evidence
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         run: bash scripts/ci-host-evidence.sh
+
+      # PR de doc seule (*.md, docs/) : pas de CI complète (décision du
+      # 12/11/2026). Le job garde son nom (check requis satisfait) : les
+      # étapes lourdes sont sautées. Push sur la branche par défaut et
+      # lancement manuel : toujours la CI complète.
+      - name: Detect doc-only changes
+        id: changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          code=true
+          if [ "$EVENT_NAME" = pull_request ]; then
+            # --no-renames : un fichier déplacé vers docs/ compte aussi par son ancien chemin.
+            files=$(git diff --name-only --no-renames HEAD^1 HEAD)
+            code_files=$(printf '%s\n' "$files" | grep -vE '(\.md$|^docs/)' || true)
+            if [ -n "$files" ] && [ -z "$code_files" ]; then
+              code=false
+            fi
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "Code changed: $code"
+
       # Runner self-hosted avec volume de cache persistant (ci-worker-orchestrator,
       # `CI_CACHE_DIR`) : store pnpm, cache npm et navigateurs Playwright y sont déjà,
       # donc on saute les caches GitHub (lents depuis les Mac). Sans volume :
@@ -40,10 +65,15 @@ jobs:
       - name: CI regression guards
         run: node --test tests/ci/*.test.mjs
       - run: npm ci
+        if: steps.changes.outputs.code == 'true'
       - run: npm run check
+        if: steps.changes.outputs.code == 'true'
       - run: node dist/cli.js --version
+        if: steps.changes.outputs.code == 'true'
       - run: npm pack --dry-run
+        if: steps.changes.outputs.code == 'true'
       - name: Verify packaged CLI and API
+        if: steps.changes.outputs.code == 'true'
         run: |
           set -euo pipefail
           tarball=$(npm pack --silent)
