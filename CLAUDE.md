@@ -85,3 +85,11 @@ la fin. Donc :
 - **Un run de la branche par défaut n'est jamais annulé** par un push suivant : `cancel-in-progress` seulement hors branche par défaut (sinon le suivi de la CI après merge est impossible).
 - **Une PR qui ne touche que de la doc** (`*.md`, `docs/`) ne lance pas la CI complète. Si des checks sont requis par la protection de branche, un job léger les satisfait (pas de `paths-ignore` qui laisserait un check requis en attente).
 - **Runs fantômes** (« queued » depuis plus de 2 h sans runner) : annulés, pas laissés en file.
+
+## Arrêter un processus : jamais par motif
+
+**Décision du fondateur (12/11/2026).** Le 12/11 à 11:52, un agent a lancé `pkill -f "cat" -U $(id -u) -x` pour arrêter sa propre attente. Sur macOS, `pkill` arrête de lire les options au premier argument qui n'en est pas une : « cat », « -U », « 501 » et « -x » sont devenus des motifs, et `-f` a tué tous les processus dont la ligne contenait « cat » (/Applications…) ou « 501 ». Toutes les applications du Mac ont été fermées.
+
+- **Interdit** pour tout agent et tout script de session : `pkill`, `killall`, `kill $(pgrep …)`, `ps … | grep … | kill`, et toute autre manière de tuer des processus par motif.
+- **Autorisé** : arrêter un processus qu'on a lancé soi-même, par son PID noté au lancement (`$!`), ou une tâche de fond par l'outil prévu (TaskStop).
+- Un serveur de test qui bloque un port : lire la ligne complète du processus (`lsof -i :PORT`, puis `ps -p PID -o command=`), vérifier qu'il vient de la session, puis `kill PID`. En cas de doute, choisir un autre port.
