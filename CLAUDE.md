@@ -71,3 +71,17 @@ la fin. Donc :
   `--force`).
 - **Lire le log avant de relancer un job en échec.** Un test instable connu se
   signale (issue ou note) au lieu d'être relancé en boucle.
+
+## CI : parallélisme, places lourdes et PR de doc
+
+**Décision du fondateur (12/11/2026).** Règle commune à tous les projets qui tournent sur l'orchestrateur `ci-worker-orchestrator`.
+
+- **Aucun nombre de workers en dur** dans un workflow ni dans une config de test. Ordre de calcul :
+  1. `CI_PLAYWRIGHT_WORKERS` (ou `CI_VITEST_MAX_WORKERS`…) : forçage manuel uniquement ;
+  2. sinon dérivé de `CI_CPUS` (exporté par l'orchestrateur, cœurs réellement alloués au runner) : navigateurs `clamp(floor(CI_CPUS × 0,75), 2, 8)`, vitest/jest/turbo même logique ;
+  3. sinon `os.availableParallelism()`, en local seulement : il ne voit pas le quota CPU d'un conteneur (Next affichait 31 workers sur un runner plafonné).
+- **Playwright `fullyParallel: true`** quand les tests sont isolés (mocks, contexte neuf par test). Sinon : isolation par worker (`TEST_WORKER_INDEX` pour base, ports, dossiers) ou série par fichier, écrite et justifiée dans la config.
+- **Places lourdes** : label `ci-resource-heavy` générique, jamais un nom de machine (un label de machine est un filtre dur : file d'attente devant elle). 2 places lourdes sur les machines d'au moins 14 CPU, 1 ailleurs. Sharder seulement quand plusieurs places lourdes sont libres. Un petit smoke test ne prend pas une place lourde.
+- **Un run de la branche par défaut n'est jamais annulé** par un push suivant : `cancel-in-progress` seulement hors branche par défaut (sinon le suivi de la CI après merge est impossible).
+- **Une PR qui ne touche que de la doc** (`*.md`, `docs/`) ne lance pas la CI complète. Si des checks sont requis par la protection de branche, un job léger les satisfait (pas de `paths-ignore` qui laisserait un check requis en attente).
+- **Runs fantômes** (« queued » depuis plus de 2 h sans runner) : annulés, pas laissés en file.
