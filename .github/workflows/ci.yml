@@ -32,8 +32,10 @@ jobs:
         run: |
           code=true
           if [ "$EVENT_NAME" = pull_request ]; then
-            files=$(git diff --name-only HEAD^1 HEAD)
-            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qvE '(\.md$|^docs/)'; then
+            # --no-renames : un fichier déplacé vers docs/ compte aussi par son ancien chemin.
+            files=$(git diff --name-only --no-renames HEAD^1 HEAD)
+            code_files=$(printf '%s\n' "$files" | grep -vE '(\.md$|^docs/)' || true)
+            if [ -n "$files" ] && [ -z "$code_files" ]; then
               code=false
             fi
           fi
